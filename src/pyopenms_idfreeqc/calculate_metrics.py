@@ -2819,18 +2819,35 @@ def calculate_metrics(
         annot_df = df_heatmap_original.apply(_row_to_strs, axis=1)
 
         # Plot
-        plt.figure(figsize=(15, max(8, len(df_heatmap_scaled) * 0.6)))
-        sns.heatmap(
-            df_heatmap_scaled.astype(float),
-            annot=annot_df,
+        # Build diverging colormap with NA color
+        cmap = sns.color_palette("RdBu_r", as_cmap=True)
+        cmap.set_bad("lightgray")
+
+        # Shorten run names to base name without extension (applies to both data and annotations)
+        rename_cols = {col: os.path.splitext(os.path.basename(str(col)))[0] for col in df_heatmap_scaled.columns}
+        df_heatmap_scaled_renamed = df_heatmap_scaled.copy().rename(columns=rename_cols)
+        annot_df_renamed = annot_df.copy().rename(columns=rename_cols)
+
+        # Plot heatmap with compact horizontal colorbar at the bottom
+        fig, ax = plt.subplots(figsize=(15, max(8, len(df_heatmap_scaled_renamed) * 0.6)))
+        hm = sns.heatmap(
+            df_heatmap_scaled_renamed.astype(float),
+            annot=annot_df_renamed,
             fmt="",
-            cmap='viridis',
-            linewidths=.5
+            cmap=cmap,
+            linewidths=.5,
+            center=0.0,
+            cbar=True,
+            cbar_kws={"orientation": "horizontal", "pad": 0.08, "shrink": 0.7, "aspect": 30}
         )
-        plt.title('QC Metrics Heatmap Across Runs (Color Normalized per Row, Annotations Original)')
-        plt.xlabel('Run')
-        plt.ylabel('Metric')
-        plt.tight_layout()
+
+        # Rotate run (x-axis) labels for readability
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha="right")
+
+        ax.set_title('QC Metrics Heatmap Across Runs (Color Normalized per Row, Annotations Original)')
+        ax.set_xlabel('Run')
+        ax.set_ylabel('Metric')
+        fig.tight_layout()
 
         plt.savefig(plot_output, dpi=300, bbox_inches='tight')
         plt.close()
