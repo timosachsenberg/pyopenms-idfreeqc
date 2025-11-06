@@ -114,13 +114,13 @@ for name, description in METRIC_METADATA.items():
 
 The package computes the following deterministic metrics:
 
-- **ChromatographyDuration**: Pseudo chromatography duration in minutes
-- **NumberOfSpectra_MS1**: Synthetic count of MS1 spectra
-- **NumberOfSpectra_MS2**: Synthetic count of MS2 spectra
-- **PeakDensity_MS1_Q2**: Median MS1 peak density (arbitrary units)
-- **PeakDensity_MS2_Q2**: Median MS2 peak density (arbitrary units)
-- **FastestFrequency_MS1**: Fastest MS1 acquisition frequency (Hz)
-- **FastestFrequency_MS2**: Fastest MS2 acquisition frequency (Hz)
+- **ChromatographyDuration**: Pseudo chromatography duration in minutes.
+- **NumberOfSpectra_MS1**: Synthetic count of MS1 spectra.
+- **NumberOfSpectra_MS2**: Synthetic count of MS2 spectra.
+- **PeakDensity_MS1_Q2**: Median MS1 peak density (a.u.).
+- **PeakDensity_MS2_Q2**: Median MS2 peak density (a.u.).
+- **FastestFrequency_MS1**: Fastest MS1 acquisition frequency (Hz).
+- **FastestFrequency_MS2**: Fastest MS2 acquisition frequency (Hz).
 
 **Note**: These metrics are deterministic and derived from file content hashes. They serve as lightweight substitutes for real scientific metrics, ensuring reproducibility without requiring heavy dependencies.
 
