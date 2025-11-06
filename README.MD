@@ -17,15 +17,23 @@ A Python package for computing ID-free quality control (QC) metrics from mass sp
 
 ## Installation
 
-Install the package using pip:
+### From source
+
+Clone the repository and install using pip:
 
 ```bash
+git clone https://github.com/timosachsenberg/pyopenms-idfreeqc.git
+cd pyopenms-idfreeqc
 pip install .
 ```
 
-For development installation:
+### Development installation
+
+For development, install in editable mode:
 
 ```bash
+git clone https://github.com/timosachsenberg/pyopenms-idfreeqc.git
+cd pyopenms-idfreeqc
 pip install -e .
 ```
 
