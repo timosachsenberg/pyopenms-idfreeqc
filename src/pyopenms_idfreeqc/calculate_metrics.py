@@ -2548,23 +2548,25 @@ def create_table(headers: List[str], rows: List[List[str]], title: Optional[str]
     else:
         return f"{table_str}\n"
 
-def parse_mzqc_metrics(json_str: str) -> Tuple[List[str], Dict[str, Dict[str, Any]], Dict[str, List[Any]], Dict[str, List[Any]]]:
+def parse_mzqc_metrics(json_str: str) -> Tuple[List[str], Dict[str, Dict[str, Any]], Dict[str, List[Any]]]:
     """
     Parse mzQC JSON with multiple runs and organize metrics.
 
     Returns:
         Tuple of (run_labels, qc_metrics_dict, instrument_metrics_dict)
-        where each dict maps metric names to lists of values (one per run)
+        where each dict maps metric names to lists of values (one per run),
+        preserving the original run order. Missing metrics are aligned by
+        inserting 'N/A' placeholders for runs where the metric is absent.
     """
     try:
         data = json.loads(json_str)
         run_qualities = data['runQualities']
 
         run_labels = []
-        qc_metrics_dict = {}
-        instrument_metrics_dict = {}
+        qc_metrics_dict: Dict[str, Dict[str, Any]] = {}
+        instrument_metrics_dict: Dict[str, List[Any]] = {}
 
-        for run in run_qualities:
+        for run_idx, run in enumerate(run_qualities):
             # Get run label/filename
             label = run['metadata'].get('label', 'unknown')
             input_files = run['metadata'].get('inputFiles', [])
@@ -2574,7 +2576,15 @@ def parse_mzqc_metrics(json_str: str) -> Tuple[List[str], Dict[str, Dict[str, An
                 filename = label
             run_labels.append(filename)
 
+            # Track metrics present in this run
+            seen_qc_this_run: set = set()
+            seen_instr_this_run: set = set()
+
             metrics = run['qualityMetrics']
+
+            # Snapshot keys that existed before processing this run
+            prev_qc_keys = set(qc_metrics_dict.keys())
+            prev_instr_keys = set(instrument_metrics_dict.keys())
 
             for metric in metrics:
                 name = metric['name']
@@ -2587,24 +2597,38 @@ def parse_mzqc_metrics(json_str: str) -> Tuple[List[str], Dict[str, Dict[str, An
                 if name.startswith('Instrument '):
                     clean_name = name[11:]
                     if clean_name not in instrument_metrics_dict:
-                        instrument_metrics_dict[clean_name] = []
+                        # First time we see this instrument metric -> pad previous runs
+                        instrument_metrics_dict[clean_name] = [format_value(None)] * run_idx
                     instrument_metrics_dict[clean_name].append(formatted_value)
+                    seen_instr_this_run.add(clean_name)
 
                 else:
                     # QC metrics - store with accession and description
                     if name not in qc_metrics_dict:
+                        # First time we see this metric -> pad previous runs
                         qc_metrics_dict[name] = {
-                            'values': [],
+                            'values': [format_value(None)] * run_idx,
                             'accession': accession,
                             'description': description
                         }
+                    # If we already have metadata, keep the first occurrence's accession/description
                     qc_metrics_dict[name]['values'].append(formatted_value)
+                    seen_qc_this_run.add(name)
+
+            # Append placeholder for any previously known metrics not present in this run
+            missing_qc = prev_qc_keys - seen_qc_this_run
+            for m in missing_qc:
+                qc_metrics_dict[m]['values'].append(format_value(None))
+
+            missing_instr = prev_instr_keys - seen_instr_this_run
+            for m in missing_instr:
+                instrument_metrics_dict[m].append(format_value(None))
 
         return run_labels, qc_metrics_dict, instrument_metrics_dict
 
     except (json.JSONDecodeError, KeyError, IndexError) as e:
         print(f"Error parsing mzQC JSON: {e}")
-        return [], {}, {}, {}
+        return [], {}, {}
 
 def print_metrics_tables(json_str: str) -> None:
     """Print formatted tables with QC metrics for multiple runs, showing values side-by-side."""
