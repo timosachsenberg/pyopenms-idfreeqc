@@ -2674,7 +2674,8 @@ def calculate_metrics(
     generate_plot: bool = True,
     plot_output: str = "idfree_qc_plot.png",
     show_tables: bool = True,
-    show_json: bool = False
+    show_json: bool = False,
+    cmap_name: str = "RdBu_r"
 ) -> str:
     """
     Calculate QC metrics for one or more mzML files and generate mzQC output.
@@ -2703,6 +2704,7 @@ def calculate_metrics(
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
+    import matplotlib as mpl
     
     print("Processing mzML files and computing QC metrics...")
     all_run_data = []
@@ -2819,9 +2821,21 @@ def calculate_metrics(
         annot_df = df_heatmap_original.apply(_row_to_strs, axis=1)
 
         # Plot
-        # Build diverging colormap with NA color
-        cmap = sns.color_palette("RdBu_r", as_cmap=True)
-        cmap.set_bad("lightgray")
+        # Build colormap from parameter with NA color
+        try:
+            cmap_obj = sns.color_palette(cmap_name, as_cmap=True)
+        except Exception:
+            try:
+                cmap_obj = mpl.colormaps.get_cmap(cmap_name)
+            except Exception:
+                try:
+                    cmap_obj = mpl.cm.get_cmap(cmap_name)
+                except Exception:
+                    cmap_obj = sns.color_palette("RdBu_r", as_cmap=True)
+        try:
+            cmap_obj.set_bad("lightgray")
+        except Exception:
+            pass
 
         # Shorten run names to base name without extension (applies to both data and annotations)
         rename_cols = {col: os.path.splitext(os.path.basename(str(col)))[0] for col in df_heatmap_scaled.columns}
@@ -2834,12 +2848,22 @@ def calculate_metrics(
             df_heatmap_scaled_renamed.astype(float),
             annot=annot_df_renamed,
             fmt="",
-            cmap=cmap,
+            cmap=cmap_obj,
             linewidths=.5,
             center=0.0,
             cbar=True,
             cbar_kws={"orientation": "horizontal", "pad": 0.08, "shrink": 0.7, "aspect": 30}
         )
+
+        # Cross-out NaN cells for quick visual identification
+        nan_mask = df_heatmap_scaled_renamed.isna()
+        n_rows, n_cols = nan_mask.shape
+        for i in range(n_rows):
+            for j in range(n_cols):
+                if nan_mask.iat[i, j]:
+                    # draw 'X' across the cell bounds [j, j+1] x [i, i+1]
+                    ax.plot([j, j+1], [i, i+1], color='dimgray', lw=1.0, alpha=0.9, zorder=3, solid_capstyle='round')
+                    ax.plot([j, j+1], [i+1, i], color='dimgray', lw=1.0, alpha=0.9, zorder=3, solid_capstyle='round')
 
         # Rotate run (x-axis) labels for readability
         ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha="right")
@@ -2933,7 +2957,13 @@ Examples:
     is_flag=True,
     help='Download demo files before processing'
 )
-def main(files, demo, output, plot, no_plot, no_tables, show_json, download_demo):
+@click.option(
+    '--cmap',
+    '-c',
+    default='RdBu_r',
+    help='Colormap name for heatmap (e.g., RdBu_r, viridis)'
+)
+def main(files, demo, output, plot, no_plot, no_tables, show_json, download_demo, cmap):
     mzml_files = []
     
     if demo:
@@ -2982,7 +3012,8 @@ def main(files, demo, output, plot, no_plot, no_tables, show_json, download_demo
             generate_plot=not no_plot,
             plot_output=plot,
             show_tables=not no_tables,
-            show_json=show_json
+            show_json=show_json,
+            cmap_name=cmap
         )
     except Exception as e:
         click.echo(f"Error during processing: {e}", err=True)
