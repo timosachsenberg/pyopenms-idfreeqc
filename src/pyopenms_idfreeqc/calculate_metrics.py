@@ -8,6 +8,7 @@ from mzqc import MZQCFile as qc
 from typing import List, Tuple, Dict, Any, Optional, Union
 import os
 import click
+import textwrap
 
 # -------------------------------------------------------------------------
 # Demo data (replace with your own mzML files)
@@ -2817,7 +2818,31 @@ def calculate_metrics(
 # -------------------------------------------------------------------------
 # Click CLI wrapper
 # -------------------------------------------------------------------------
-@click.command()
+@click.command(help=textwrap.dedent("""
+Calculate ID-free QC metrics for mzML mass spectrometry files.
+
+This tool computes comprehensive quality control metrics from mzML files
+and outputs results in mzQC format with optional visualizations.
+
+FILES: One or more mzML files to process. Supports wildcards (e.g., *.mzML)
+
+\b
+Examples:
+
+  # Process specific files (supports wildcards)
+  python calculate_metrics.py sample1.mzML sample2.mzML
+  python calculate_metrics.py data/*.mzML
+
+  # Use demo files (downloads if needed)
+  python calculate_metrics.py --demo --download-demo
+
+  # Custom output paths
+  python calculate_metrics.py --demo -o my_qc.json -p my_plot.png
+
+  # Library usage in Python code:
+  from pyopenms_idfreeqc.calculate_metrics import calculate_metrics
+  json_output = calculate_metrics(["sample1.mzML", "sample2.mzML"])
+"""))
 @click.argument(
     'files',
     nargs=-1,
@@ -2864,31 +2889,6 @@ def calculate_metrics(
     help='Download demo files before processing'
 )
 def main(files, demo, output, plot, no_plot, no_tables, show_json, download_demo):
-    """
-    Calculate ID-free QC metrics for mzML mass spectrometry files.
-    
-    This tool computes comprehensive quality control metrics from mzML files
-    and outputs results in mzQC format with optional visualizations.
-    
-    FILES: One or more mzML files to process. Supports wildcards (e.g., *.mzML)
-    
-    \b
-    Examples:
-    
-      # Process specific files (supports wildcards)
-      python calculate_metrics.py sample1.mzML sample2.mzML
-      python calculate_metrics.py data/*.mzML
-      
-      # Use demo files (downloads if needed)
-      python calculate_metrics.py --demo --download-demo
-      
-      # Custom output paths
-      python calculate_metrics.py --demo -o my_qc.json -p my_plot.png
-      
-      # Library usage in Python code:
-      from pyopenms_idfreeqc.calculate_metrics import calculate_metrics
-      json_output = calculate_metrics(["sample1.mzML", "sample2.mzML"])
-    """
     mzml_files = []
     
     if demo:
