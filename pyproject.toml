@@ -10,12 +10,6 @@ readme = "README.MD"
 requires-python = ">=3.9"
 dependencies = [
     "click",
-    "matplotlib",
-    "mzqc",
-    "numpy",
-    "pandas",
-    "pyopenms",
-    "seaborn",
 ]
 
 [project.scripts]

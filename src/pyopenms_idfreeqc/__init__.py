@@ -1,29 +1,32 @@
-"""pyopenms-idfreeqc package exposing ID-free QC helpers."""
+"""Public package interface for the deterministic QC demo."""
 
 from .calculate_metrics import (
-    DEMO_MZML_FILES,
+    DEMO_DATASETS,
     METRIC_METADATA,
-    analyze_experiment,
-    build_mzqc,
+    ResolvedInput,
+    build_qc_report,
     cli,
-    load_experiment,
-    parse_mzqc_metrics,
+    compute_qc_metrics,
+    main,
     plot_metrics_heatmap,
-    print_metrics_tables,
+    prepare_demo_files,
+    print_metrics_table,
     resolve_inputs,
     run_idfree_qc,
 )
 
 __all__ = [
-    "DEMO_MZML_FILES",
+    "DEMO_DATASETS",
     "METRIC_METADATA",
-    "analyze_experiment",
-    "build_mzqc",
+    "ResolvedInput",
+    "build_qc_report",
     "cli",
-    "load_experiment",
-    "parse_mzqc_metrics",
+    "compute_qc_metrics",
+    "main",
     "plot_metrics_heatmap",
-    "print_metrics_tables",
+    "prepare_demo_files",
+    "print_metrics_table",
     "resolve_inputs",
     "run_idfree_qc",
 ]
+
