@@ -2872,21 +2872,22 @@ def main(files, demo, output, plot, no_plot, no_tables, show_json, download_demo
     
     FILES: One or more mzML files to process. Supports wildcards (e.g., *.mzML)
     
+    \b
     Examples:
     
-        # Process specific files (supports wildcards)
-        python calculate_metrics.py sample1.mzML sample2.mzML
-        python calculate_metrics.py data/*.mzML
-        
-        # Use demo files (downloads if needed)
-        python calculate_metrics.py --demo --download-demo
-        
-        # Custom output paths
-        python calculate_metrics.py --demo -o my_qc.json -p my_plot.png
-        
-        # Library usage in Python code:
-        from pyopenms_idfreeqc.calculate_metrics import calculate_metrics
-        json_output = calculate_metrics(["sample1.mzML", "sample2.mzML"])
+      # Process specific files (supports wildcards)
+      python calculate_metrics.py sample1.mzML sample2.mzML
+      python calculate_metrics.py data/*.mzML
+      
+      # Use demo files (downloads if needed)
+      python calculate_metrics.py --demo --download-demo
+      
+      # Custom output paths
+      python calculate_metrics.py --demo -o my_qc.json -p my_plot.png
+      
+      # Library usage in Python code:
+      from pyopenms_idfreeqc.calculate_metrics import calculate_metrics
+      json_output = calculate_metrics(["sample1.mzML", "sample2.mzML"])
     """
     mzml_files = []
     

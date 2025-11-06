@@ -1,32 +1,35 @@
-"""Public package interface for the deterministic QC demo."""
+"""
+PyOpenMS ID-Free QC - Identification-Free Quality Control Metrics for Mass Spectrometry
 
+This package provides comprehensive quality control metrics for mass spectrometry
+data without requiring peptide/protein identification. It processes mzML files and
+generates mzQC-compliant reports with optional visualizations.
+
+Main Components:
+    - calculate_metrics: Core function for computing QC metrics from mzML files
+    - main: CLI entry point for command-line usage
+    
+Example Usage:
+    >>> from pyopenms_idfreeqc import calculate_metrics
+    >>> json_output = calculate_metrics(["sample1.mzML", "sample2.mzML"])
+    
+    Or via command line:
+    $ python -m pyopenms_idfreeqc --demo --download-demo
+"""
+
+__version__ = "0.1.0"
+__author__ = "Timo Sachsenberg"
+
+# Import main public API
 from .calculate_metrics import (
-    DEMO_DATASETS,
-    METRIC_METADATA,
-    ResolvedInput,
-    build_qc_report,
-    cli,
-    compute_qc_metrics,
+    calculate_metrics,
     main,
-    plot_metrics_heatmap,
-    prepare_demo_files,
-    print_metrics_table,
-    resolve_inputs,
-    run_idfree_qc,
 )
 
+# Define public API
 __all__ = [
-    "DEMO_DATASETS",
-    "METRIC_METADATA",
-    "ResolvedInput",
-    "build_qc_report",
-    "cli",
-    "compute_qc_metrics",
+    "calculate_metrics",
     "main",
-    "plot_metrics_heatmap",
-    "prepare_demo_files",
-    "print_metrics_table",
-    "resolve_inputs",
-    "run_idfree_qc",
+    "__version__",
 ]
 
