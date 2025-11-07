@@ -2666,6 +2666,77 @@ Analyzing {len(run_labels)} run(s): {', '.join(run_labels)}\
         print(create_table(headers, rows, "QC METRICS"))
 
 # -------------------------------------------------------------------------
+# TSV writer
+# -------------------------------------------------------------------------
+def derive_tsv_output_path(output_json_path: str) -> str:
+    """
+    Derive a TSV output path from the mzQC JSON output path.
+    If the path ends with '.mzQC.json' (case-insensitive), replace it by '.tsv'.
+    Otherwise, replace a generic '.json' extension by '.tsv' or append '.tsv'.
+    """
+    base = output_json_path
+    lower = base.lower()
+    if lower.endswith('.mzqc.json'):
+        return base[: -len('.mzQC.json')] + '.tsv'
+    if lower.endswith('.json'):
+        return os.path.splitext(base)[0] + '.tsv'
+    return base + '.tsv'
+
+
+def write_metrics_tsv(json_str: str, tsv_path: str) -> None:
+    """
+    Write metrics table to a TSV file.
+    Leading comment lines (prefixed with '#') contain instrument information per run.
+    The table contains QC metrics with values for each run.
+    """
+    import pandas as pd
+
+    run_labels, qc_metrics_dict, instrument_metrics_dict = parse_mzqc_metrics(json_str)
+
+    lines: List[str] = []
+    if run_labels:
+        # Header with run labels
+        lines.append("# Instrument metadata (values aligned to runs below)")
+        lines.append("# Runs\t" + "\t".join(str(x) for x in run_labels))
+        if instrument_metrics_dict:
+            for prop, values in instrument_metrics_dict.items():
+                # Ensure alignment with number of runs
+                vals = list(values)
+                if len(vals) < len(run_labels):
+                    vals += [""] * (len(run_labels) - len(vals))
+                lines.append("# " + prop + "\t" + "\t".join(vals))
+        else:
+            lines.append("# (no instrument metadata available)")
+    else:
+        lines.append("# (no runs found)")
+
+    # Blank line before data table
+    lines.append("")
+
+    # Build metrics table (metrics only)
+    headers = ["Metric Name"] + run_labels
+    rows: List[List[str]] = []
+    for metric_name, metric_data in qc_metrics_dict.items():
+        vals = list(metric_data['values'])
+        if len(vals) < len(run_labels):
+            vals += [""] * (len(run_labels) - len(vals))
+        accession = metric_data.get('accession')
+        if accession and str(accession).strip() not in ("-", "None"):
+            name_with_acc = f"{metric_name} ({accession})"
+        else:
+            name_with_acc = metric_name
+        rows.append([name_with_acc] + vals)
+
+    df = pd.DataFrame(rows, columns=headers) if rows else pd.DataFrame(columns=headers)
+
+    # Write file
+    with open(tsv_path, "w", encoding="utf-8") as fh:
+        for line in lines:
+            fh.write(line + "\n")
+        df.to_csv(fh, sep="\t", index=False)
+
+
+# -------------------------------------------------------------------------
 # Core function for library usage
 # -------------------------------------------------------------------------
 def calculate_metrics(
@@ -2673,7 +2744,7 @@ def calculate_metrics(
     output_file: Optional[str] = "multi_run_qc.mzQC.json",
     generate_plot: bool = True,
     plot_output: str = "idfree_qc_plot.png",
-    show_tables: bool = True,
+    show_tables: bool = False,
     show_json: bool = False,
     cmap_name: str = "RdBu_r"
 ) -> str:
@@ -2751,6 +2822,13 @@ def calculate_metrics(
         with open(output_file, "w") as fh:
             fh.write(json_str)
         print(f"\n✓ mzQC file saved to: {output_file}")
+        # Also save TSV metrics table next to JSON
+        try:
+            tsv_output_path = derive_tsv_output_path(output_file)
+            write_metrics_tsv(json_str, tsv_output_path)
+            print(f"✓ TSV metrics table saved to: {tsv_output_path}")
+        except Exception as e:
+            print(f"Warning: Failed to save TSV metrics table: {e}")
 
     # Generate plot if requested
     if generate_plot:
@@ -2928,7 +3006,7 @@ Examples:
     '-o',
     default='multi_run_qc.mzQC.json',
     type=click.Path(),
-    help='Output mzQC JSON file path (default: multi_run_qc.mzQC.json)'
+    help='Output path for mzQC JSON; a TSV metrics table will also be saved next to it (default: multi_run_qc.mzQC.json)'
 )
 @click.option(
     '--plot',
@@ -2943,9 +3021,9 @@ Examples:
     help='Skip generating the heatmap plot'
 )
 @click.option(
-    '--no-tables',
+    '--show-tables',
     is_flag=True,
-    help='Skip printing formatted metric tables'
+    help='Print formatted metric tables to console'
 )
 @click.option(
     '--show-json',
@@ -2963,7 +3041,7 @@ Examples:
     default='RdBu_r',
     help='Colormap name for heatmap (e.g., RdBu_r, viridis)'
 )
-def main(files, demo, output, plot, no_plot, no_tables, show_json, download_demo, cmap):
+def main(files, demo, output, plot, no_plot, show_tables, show_json, download_demo, cmap):
     mzml_files = []
     
     if demo:
@@ -3011,7 +3089,7 @@ def main(files, demo, output, plot, no_plot, no_tables, show_json, download_demo
             output_file=output,
             generate_plot=not no_plot,
             plot_output=plot,
-            show_tables=not no_tables,
+            show_tables=show_tables,
             show_json=show_json,
             cmap_name=cmap
         )
