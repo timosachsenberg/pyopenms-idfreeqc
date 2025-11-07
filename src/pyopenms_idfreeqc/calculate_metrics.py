@@ -2458,10 +2458,13 @@ def build_mzqc(run_data: List[Dict[str, Any]]) -> str:
 
     for idx, run_info in enumerate(run_data, 1):
         mzml_file = run_info['filename']
+        input_name = os.path.splitext(os.path.basename(mzml_file))[0]
         metrics_dict = run_info['metrics']
         instrument_metadata = run_info['instrument_metadata']
 
-        infi = qc.InputFile(name=mzml_file, location=mzml_file, fileFormat="mzML")
+        infi = qc.InputFile(name=input_name,
+                            location=mzml_file,
+                            fileFormat=qc.CvParameter(accession="MS:1000584", name="mzML format"))
 
         meta = qc.MetaDataParameters(
             inputFiles=[infi],
@@ -2509,8 +2512,8 @@ def build_mzqc(run_data: List[Dict[str, Any]]) -> str:
         setQualities=[],
         controlledVocabularies=[cv_qc, cv_ms]
     )
-
-    json_str = json.dumps(mzqc_obj, indent=2, default=lambda o: getattr(o, "__dict__", str(o)))
+    
+    json_str = json.dumps(json.loads(qc.JsonSerialisable.to_json(mzqc_obj)), indent=2)
     return json_str
 
 # -------------------------------------------------------------------------
